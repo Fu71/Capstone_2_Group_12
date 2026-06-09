@@ -1,0 +1,126 @@
+================================================================
+     PHÂN CHIA CÔNG VIỆC - CAPSTONE JS
+     Giao diện: Flowbite + Tailwind CSS
+================================================================
+
+----------------------------------------------------------------
+NGƯỜI 1 — TRANG BÁN HÀNG (Shop Page)
+----------------------------------------------------------------
+
+[ GIAO DIỆN - HTML + Tailwind + Flowbite ]
+  - Header/Navbar với Flowbite (logo, menu, icon giỏ hàng + badge số lượng)
+  - Grid sản phẩm dùng Tailwind (grid grid-cols-2 md:grid-cols-4 gap-4)
+  - Card sản phẩm dùng Flowbite Card component (ảnh, tên, giá, nút "Thêm vào giỏ")
+  - Dropdown filter Samsung/iPhone dùng Flowbite Dropdown hoặc Select
+  - Giỏ hàng dùng Flowbite Drawer (kéo ra từ bên phải) hoặc Modal
+  - Responsive sẵn nhờ Tailwind
+
+[ JAVASCRIPT ]
+  - Xây dựng class Product (name, price, screen, blackCamera, frontCamera, img, desc, type)
+  - Call API MockAPI lấy danh sách sản phẩm → render card ra giao diện
+  - Chức năng filter theo loại (onchange dropdown)
+  - Class CartItem, logic thêm vào giỏ hàng:
+      + Nếu sản phẩm chưa có → push vào cart với quantity = 1
+      + Nếu đã có → tăng quantity lên 1
+  - Render giỏ hàng (hàm renderCart), tính tổng tiền
+  - Tăng/giảm số lượng sản phẩm trong giỏ
+  - Xóa sản phẩm khỏi giỏ hàng
+  - Nút thanh toán → clear giỏ, dùng Flowbite Toast thông báo thành công
+  - Lưu & load giỏ hàng từ localStorage
+
+
+----------------------------------------------------------------
+NGƯỜI 2 — TRANG QUẢN TRỊ (Admin Page)
+----------------------------------------------------------------
+
+[ GIAO DIỆN - HTML + Tailwind + Flowbite ]
+  - Sidebar + Topbar dùng Flowbite Sidebar component
+  - Bảng danh sách sản phẩm dùng Flowbite Table (ảnh, tên, giá, loại, nút Sửa/Xóa)
+  - Form thêm/chỉnh sửa dùng Flowbite Modal + Flowbite Form Input
+  - Ô tìm kiếm dùng Flowbite Search Input
+  - Nút sắp xếp giá dùng Flowbite Button
+  - Badge loại sản phẩm (Samsung/iPhone) dùng Flowbite Badge
+  - Validation báo lỗi dùng Flowbite helper text (text-red-600)
+
+[ JAVASCRIPT ]
+  - Tích hợp Axios để call API (GET, POST, PUT, DELETE)
+  - Hiển thị danh sách sản phẩm ra table
+  - Thêm sản phẩm mới (POST) + đóng modal sau khi thêm
+  - Xóa sản phẩm (DELETE) + Flowbite Toast xác nhận
+  - Cập nhật sản phẩm (PUT) — load data vào form modal, submit cập nhật
+  - Validation form (kiểm tra rỗng, giá > 0...)
+  - Tìm kiếm sản phẩm theo tên
+  - Sắp xếp theo giá tăng dần / giảm dần
+
+
+----------------------------------------------------------------
+CÔNG VIỆC CHUNG (Cả 2 người)
+----------------------------------------------------------------
+
+  Người 1:
+    - Tạo MockAPI & import data mẫu
+
+  Người 2:
+    - Setup project, cài Tailwind CDN + Flowbite CDN
+
+  Cả 2:
+    - Tạo file phân chia công việc nộp kèm
+    - Quay video demo YouTube
+    - Đẩy code lên GitHub
+    - Deploy lên Vercel hoặc Netlify
+
+
+----------------------------------------------------------------
+CẤU TRÚC THƯ MỤC
+----------------------------------------------------------------
+
+  project/
+  ├── index.html          ← trang bán hàng (Người 1)
+  ├── admin.html          ← trang admin   (Người 2)
+  ├── js/
+  │   ├── Product.js      ← class Product
+  │   ├── CartItem.js     ← class CartItem
+  │   ├── shop.js         ← logic trang bán hàng
+  │   └── admin.js        ← logic trang admin
+  └── assets/
+      └── img/
+
+
+----------------------------------------------------------------
+SETUP TAILWIND + FLOWBITE (dán vào <head>)
+----------------------------------------------------------------
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Flowbite CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet"/>
+
+  <!-- Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- Flowbite JS (đặt cuối <body>) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+
+
+----------------------------------------------------------------
+LƯU Ý QUAN TRỌNG
+----------------------------------------------------------------
+
+  1. Flowbite component nào có toggle/modal/drawer thì cần có
+     flowbite.min.js ở cuối <body> mới hoạt động.
+
+  2. Khi render sản phẩm bằng JS (innerHTML), nếu dùng Flowbite
+     Modal động thì cần gọi lại initFlowbite() sau mỗi lần render
+     để Flowbite nhận diện các element mới.
+
+  3. Dùng Git branch (feature/shop và feature/admin) để 2 người
+     làm song song, không bị conflict.
+
+  4. Khi nộp bài nhớ kèm:
+     - Link GitHub chứa source code
+     - Link online của dự án (Vercel / Netlify / GitHub Pages)
+     - Link YouTube quay demo dự án
+     - File phân chia công việc (file này) lưu chung trong GitHub
+
+================================================================
