@@ -1,0 +1,10 @@
+link gợi ý bài làm: 
+https://docs.google.com/presentation/d/1QOncSxgUnU3M-TTiCbvZjbkkf6hw5rOSH5ajm46_VNM/edit?usp=sharing
+link ghi chép phân chia công việc: 
+https://docs.google.com/spreadsheets/d/1x09jlcTluBMrKsYl4qIZG_SFpLhJOaS1/edit?usp=sharing&ouid=101203514068536107743&rtpof=true&sd=true
+link data dành cho api: 
+https://docs.google.com/document/d/1HDGoyyz7MlZx26xnOLhdsXucIAMKQh0QzbABa8CHXmo/edit?usp=sharing
+link hướng dẫn tạo api: 
+https://docs.google.com/document/d/1Bx2dmaQWK9avOFx_IuZMZYcICINVE7ry/edit?usp=sharing&ouid=101203514068536107743&rtpof=true&sd=true
+link data đã tạo chỉ cần link axios vô: 
+https://6a290a5af59cb8f65f1c55bb.mockapi.io/Products
