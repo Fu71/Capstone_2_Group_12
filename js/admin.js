@@ -1,280 +1,242 @@
+// js/admin.js
+
 // ==========================
-// API & GLOBAL VARIABLES
+// GLOBAL STATE
 // ==========================
-const BASE_URL = "https://6a1efb5cb79eec0d6cf061d6.mockapi.io/api/Product";
 let productList = [];
 let isEditing = false;
 let isSortAsc = true;
 
 // ==========================
-// DOM ELEMENTS
+// LẤY ELEMENT (DOM)
 // ==========================
-const tblProductList = document.getElementById("tblProductList");
-const searchInput = document.getElementById("searchInput");
-const btnSortPrice = document.getElementById("btnSortPrice");
+const DOM = {
+    tblList: document.getElementById("tblProductList"),
+    searchInput: document.getElementById("searchInput"),
+    btnSortPrice: document.getElementById("btnSortPrice"),
+    btnSave: document.getElementById("btnSaveModal"),
+    modalTitle: document.getElementById("modalTitle"),
+    modalEl: document.getElementById("productModal"),
+    toast: document.getElementById("toast-success"),
+    toastMsg: document.getElementById("toastMessage")
+};
 
-// Modal Elements
-const productModal = document.getElementById("productModal");
-const modalTitle = document.getElementById("modalTitle");
-const btnSaveModal = document.getElementById("btnSaveModal");
-
-// Form Elements
-const prodIdInput = document.getElementById("prodId");
-const prodNameInput = document.getElementById("prodName");
-const prodPriceInput = document.getElementById("prodPrice");
-const prodTypeInput = document.getElementById("prodType");
-const prodScreenInput = document.getElementById("prodScreen");
-const prodImgInput = document.getElementById("prodImg");
-const prodFrontCameraInput = document.getElementById("prodFrontCamera");
-const prodBackCameraInput = document.getElementById("prodBackCamera");
-const prodDescInput = document.getElementById("prodDesc");
-
-// Toast
-const toast = document.getElementById("toast-success");
-const toastMessage = document.getElementById("toastMessage");
+// Cấu hình form input và id thông báo lỗi tương ứng
+const FORM_FIELDS = [
+    { id: "prodName", err: "errName", type: "string" },
+    { id: "prodPrice", err: "errPrice", type: "number" },
+    { id: "prodType", err: "errType", type: "string" },
+    { id: "prodScreen", err: "errScreen", type: "string" },
+    { id: "prodImg", err: "errImg", type: "string" },
+    { id: "prodFrontCamera", err: "errFrontCamera", type: "string" },
+    { id: "prodBackCamera", err: "errBackCamera", type: "string" },
+    { id: "prodDesc", err: "errDesc", type: "string" }
+];
 
 // ==========================
-// INITIALIZATION
+// KHỞI TẠO APP
 // ==========================
 function init() {
-    fetchProducts();
+    fetchAndRender();
 }
 
-// ==========================
-// FETCH & RENDER
-// ==========================
-async function fetchProducts() {
-    try {
-        const response = await axios.get(BASE_URL);
-        productList = response.data;
+function fetchAndRender() {
+    adminService.getProducts().then(function (data) {
+        productList = data;
         renderProducts(productList);
-    } catch (error) {
-        console.error("Error fetching products:", error);
-    }
+    });
 }
 
-function renderProducts(products) {
+// ==========================
+// RENDER GIAO DIỆN
+// ==========================
+function renderProducts(dataArr) {
     let html = "";
-    products.forEach((product) => {
+    dataArr.forEach(function (p) {
         html += `
         <tr class="bg-white border-b hover:bg-gray-50">
-            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${product.id}</td>
+            <td class="px-6 py-4 font-medium text-gray-900">${p.id}</td>
+            <td class="px-6 py-4"><img src="${p.img || p.image}" alt="${p.name}" class="w-16 h-16 object-cover rounded"></td>
+            <td class="px-6 py-4 font-semibold text-gray-900">${p.name}</td>
+            <td class="px-6 py-4 text-red-600 font-bold">$${p.price}</td>
             <td class="px-6 py-4">
-                <img src="${product.img || product.image}" alt="${product.name}" class="w-16 h-16 object-cover rounded">
-            </td>
-            <td class="px-6 py-4 font-semibold text-gray-900">${product.name}</td>
-            <td class="px-6 py-4 text-red-600 font-bold">$${product.price}</td>
-            <td class="px-6 py-4">
-                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-400">
-                    ${product.type}
-                </span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-400">${p.type}</span>
             </td>
             <td class="px-6 py-4 text-center">
-                <button onclick="editProduct('${product.id}')" class="font-medium text-blue-600 hover:underline mr-3" title="Sửa">
-                    <i class="fa-solid fa-pen-to-square text-lg"></i>
-                </button>
-                <button onclick="deleteProduct('${product.id}')" class="font-medium text-red-600 hover:underline" title="Xóa">
-                    <i class="fa-solid fa-trash text-lg"></i>
-                </button>
+                <button onclick="handleEdit('${p.id}')" class="text-blue-600 hover:underline mr-3"><i class="fa-solid fa-pen-to-square text-lg"></i></button>
+                <button onclick="handleDelete('${p.id}')" class="text-red-600 hover:underline"><i class="fa-solid fa-trash text-lg"></i></button>
             </td>
         </tr>
         `;
     });
-    tblProductList.innerHTML = html;
+    DOM.tblList.innerHTML = html;
 }
 
 // ==========================
-// MODAL & FORM HANDLING
+// QUẢN LÝ FORM & MODAL
 // ==========================
-function openAddModal() {
+window.openAddModal = function () {
     isEditing = false;
-    modalTitle.innerHTML = "Thêm sản phẩm mới";
-    resetForm();
-    clearValidation();
-}
+    DOM.modalTitle.innerText = "Thêm sản phẩm mới";
+    document.getElementById("prodId").value = "";
+    
+    FORM_FIELDS.forEach(function (f) {
+        document.getElementById(f.id).value = "";
+        document.getElementById(f.err).classList.add("hidden");
+    });
+};
 
-function closeModal() {
-    // Flowbite's data-modal-toggle should handle closing, but we can programmatically close if needed.
-    // In this simple setup with Flowbite 2.2+, clicking the close button will just use the DOM.
-    // Since we used data-modal-toggle, we trigger a click on a hidden button or just hide the modal class.
-    const modalInstance = FlowbiteInstances.getInstance('Modal', 'productModal');
-    if (modalInstance) {
-        modalInstance.hide();
+window.closeModal = function () {
+    const instance = FlowbiteInstances.getInstance('Modal', 'productModal');
+    if (instance) {
+        instance.hide();
     } else {
-        // Fallback if not initialized via JS
-        productModal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
+        DOM.modalEl.classList.add('hidden');
     }
-}
+};
 
-function resetForm() {
-    prodIdInput.value = "";
-    prodNameInput.value = "";
-    prodPriceInput.value = "";
-    prodTypeInput.value = "";
-    prodScreenInput.value = "";
-    prodImgInput.value = "";
-    prodFrontCameraInput.value = "";
-    prodBackCameraInput.value = "";
-    prodDescInput.value = "";
+function getFormData() {
+    return {
+        name: document.getElementById("prodName").value.trim(),
+        price: Number(document.getElementById("prodPrice").value),
+        type: document.getElementById("prodType").value,
+        screen: document.getElementById("prodScreen").value.trim(),
+        img: document.getElementById("prodImg").value.trim(),
+        frontCamera: document.getElementById("prodFrontCamera").value.trim(),
+        backCamera: document.getElementById("prodBackCamera").value.trim(),
+        description: document.getElementById("prodDesc").value.trim()
+    };
 }
 
 // ==========================
-// VALIDATION
+// VALIDATION (Rút gọn)
 // ==========================
-function showErr(elementId, show) {
-    const el = document.getElementById(elementId);
-    if (show) {
-        el.classList.remove("hidden");
-    } else {
-        el.classList.add("hidden");
-    }
-}
-
-function clearValidation() {
-    showErr("errName", false);
-    showErr("errPrice", false);
-    showErr("errType", false);
-    showErr("errScreen", false);
-    showErr("errImg", false);
-    showErr("errFrontCamera", false);
-    showErr("errBackCamera", false);
-    showErr("errDesc", false);
-}
-
 function validateForm() {
     let isValid = true;
-    clearValidation();
+    FORM_FIELDS.forEach(function (field) {
+        const val = document.getElementById(field.id).value.trim();
+        const errEl = document.getElementById(field.err);
+        
+        let hasError = false;
+        if (val === "") {
+            hasError = true;
+        }
+        if (field.type === "number" && (isNaN(val) || Number(val) <= 0)) {
+            hasError = true;
+        }
 
-    if (!prodNameInput.value.trim()) { showErr("errName", true); isValid = false; }
-    if (!prodPriceInput.value || Number(prodPriceInput.value) <= 0) { showErr("errPrice", true); isValid = false; }
-    if (!prodTypeInput.value) { showErr("errType", true); isValid = false; }
-    if (!prodScreenInput.value.trim()) { showErr("errScreen", true); isValid = false; }
-    if (!prodImgInput.value.trim()) { showErr("errImg", true); isValid = false; }
-    if (!prodFrontCameraInput.value.trim()) { showErr("errFrontCamera", true); isValid = false; }
-    if (!prodBackCameraInput.value.trim()) { showErr("errBackCamera", true); isValid = false; }
-    if (!prodDescInput.value.trim()) { showErr("errDesc", true); isValid = false; }
-
+        if (hasError) {
+            errEl.classList.remove("hidden");
+            isValid = false;
+        } else {
+            errEl.classList.add("hidden");
+        }
+    });
     return isValid;
 }
 
 // ==========================
-// CREATE & UPDATE (SAVE)
+// CÁC HÀM XỬ LÝ (CRUD)
 // ==========================
-btnSaveModal.addEventListener("click", async () => {
+DOM.btnSave.addEventListener("click", function () {
     if (!validateForm()) return;
-
-    const productData = {
-        name: prodNameInput.value.trim(),
-        price: Number(prodPriceInput.value),
-        type: prodTypeInput.value,
-        screen: prodScreenInput.value.trim(),
-        img: prodImgInput.value.trim(), // API might use image or img, using img
-        frontCamera: prodFrontCameraInput.value.trim(),
-        backCamera: prodBackCameraInput.value.trim(),
-        description: prodDescInput.value.trim(),
-    };
-
-    try {
-        if (isEditing) {
-            const id = prodIdInput.value;
-            await axios.put(`${BASE_URL}/${id}`, productData);
-            showToast("Cập nhật sản phẩm thành công!");
-        } else {
-            await axios.post(BASE_URL, productData);
-            showToast("Thêm sản phẩm thành công!");
-        }
-        
-        closeModal();
-        fetchProducts();
-    } catch (error) {
-        console.error("Error saving product:", error);
-        alert("Có lỗi xảy ra, vui lòng thử lại!");
+    
+    const data = getFormData();
+    
+    if (isEditing) {
+        const id = document.getElementById("prodId").value;
+        adminService.updateProduct(id, data)
+            .then(function () {
+                showToast("Đã cập nhật thành công!");
+                closeModal();
+                fetchAndRender();
+            })
+            .catch(function () {
+                alert("Có lỗi xảy ra khi cập nhật!");
+            });
+    } else {
+        adminService.addProduct(data)
+            .then(function () {
+                showToast("Đã thêm thành công!");
+                closeModal();
+                fetchAndRender();
+            })
+            .catch(function () {
+                alert("Có lỗi xảy ra khi thêm mới!");
+            });
     }
 });
 
-// ==========================
-// EDIT
-// ==========================
-window.editProduct = async function(id) {
-    try {
-        const response = await axios.get(`${BASE_URL}/${id}`);
-        const p = response.data;
+window.handleEdit = function (id) {
+    adminService.getProductById(id)
+        .then(function (p) {
+            isEditing = true;
+            DOM.modalTitle.innerText = "Chỉnh sửa sản phẩm";
+            
+            // Đổ data lên form
+            document.getElementById("prodId").value = p.id;
+            document.getElementById("prodName").value = p.name;
+            document.getElementById("prodPrice").value = p.price;
+            document.getElementById("prodType").value = p.type;
+            document.getElementById("prodScreen").value = p.screen;
+            document.getElementById("prodImg").value = p.img || p.image;
+            document.getElementById("prodFrontCamera").value = p.frontCamera;
+            document.getElementById("prodBackCamera").value = p.backCamera;
+            document.getElementById("prodDesc").value = p.description;
 
-        isEditing = true;
-        modalTitle.innerHTML = "Chỉnh sửa sản phẩm";
-        clearValidation();
-        
-        prodIdInput.value = p.id;
-        prodNameInput.value = p.name;
-        prodPriceInput.value = p.price;
-        prodTypeInput.value = p.type;
-        prodScreenInput.value = p.screen;
-        prodImgInput.value = p.img || p.image;
-        prodFrontCameraInput.value = p.frontCamera;
-        prodBackCameraInput.value = p.backCamera;
-        prodDescInput.value = p.description;
+            FORM_FIELDS.forEach(function (f) {
+                document.getElementById(f.err).classList.add("hidden");
+            });
 
-        // Show modal manually if not triggered by data-toggle
-        const modalInstance = FlowbiteInstances.getInstance('Modal', 'productModal');
-        if (modalInstance) {
-            modalInstance.show();
-        } else {
-            productModal.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-        }
-
-    } catch (error) {
-        console.error("Error fetching product for edit:", error);
-    }
+            const instance = FlowbiteInstances.getInstance('Modal', 'productModal');
+            if (instance) {
+                instance.show();
+            } else {
+                DOM.modalEl.classList.remove('hidden');
+            }
+        })
+        .catch(function (err) {
+            console.error(err);
+        });
 };
 
-// ==========================
-// DELETE
-// ==========================
-window.deleteProduct = async function(id) {
-    if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
-
-    try {
-        await axios.delete(`${BASE_URL}/${id}`);
-        showToast("Đã xóa sản phẩm!");
-        fetchProducts();
-    } catch (error) {
-        console.error("Error deleting product:", error);
-        alert("Có lỗi xảy ra khi xóa!");
-    }
-};
-
-// ==========================
-// SEARCH & FILTER
-// ==========================
-searchInput.addEventListener("input", function() {
-    const keyword = this.value.toLowerCase().trim();
+window.handleDelete = function (id) {
+    if (!confirm("Bạn có chắc chắn muốn xóa?")) return;
     
-    if (!keyword) {
-        renderProducts(productList);
-        return;
-    }
+    adminService.deleteProduct(id)
+        .then(function () {
+            showToast("Đã xóa sản phẩm!");
+            fetchAndRender();
+        })
+        .catch(function () {
+            alert("Xóa thất bại!");
+        });
+};
 
-    const filtered = productList.filter((p) => p.name.toLowerCase().includes(keyword));
+// ==========================
+// TÌM KIẾM & SẮP XẾP
+// ==========================
+DOM.searchInput.addEventListener("input", function (e) {
+    const keyword = e.target.value.toLowerCase().trim();
+    const filtered = productList.filter(function (p) {
+        return p.name.toLowerCase().includes(keyword);
+    });
     renderProducts(filtered);
 });
 
-// ==========================
-// SORT BY PRICE
-// ==========================
-btnSortPrice.addEventListener("click", () => {
-    isSortAsc = !isSortAsc; // toggle
+DOM.btnSortPrice.addEventListener("click", function () {
+    isSortAsc = !isSortAsc;
+    let filtered = [...productList];
     
-    let currentData = [...productList];
-    
-    // Support searching + sorting at the same time
-    const keyword = searchInput.value.toLowerCase().trim();
+    // Kết hợp tìm kiếm
+    const keyword = DOM.searchInput.value.toLowerCase().trim();
     if (keyword) {
-        currentData = currentData.filter((p) => p.name.toLowerCase().includes(keyword));
+        filtered = filtered.filter(function (p) {
+            return p.name.toLowerCase().includes(keyword);
+        });
     }
 
-    currentData.sort((a, b) => {
+    filtered.sort(function (a, b) {
         if (isSortAsc) {
             return a.price - b.price;
         } else {
@@ -282,27 +244,25 @@ btnSortPrice.addEventListener("click", () => {
         }
     });
     
-    // Update button icon
     if (isSortAsc) {
-        btnSortPrice.innerHTML = `<i class="fa-solid fa-sort-up mr-2"></i> Giá: Tăng dần`;
+        DOM.btnSortPrice.innerHTML = `<i class="fa-solid fa-sort-up mr-2"></i> Giá: Tăng dần`;
     } else {
-        btnSortPrice.innerHTML = `<i class="fa-solid fa-sort-down mr-2"></i> Giá: Giảm dần`;
+        DOM.btnSortPrice.innerHTML = `<i class="fa-solid fa-sort-down mr-2"></i> Giá: Giảm dần`;
     }
-
-    renderProducts(currentData);
+        
+    renderProducts(filtered);
 });
 
 // ==========================
-// TOAST NOTIFICATION
+// UTILS (TOAST)
 // ==========================
-function showToast(message) {
-    toastMessage.innerHTML = message;
-    toast.classList.remove("hidden");
-
-    setTimeout(() => {
-        toast.classList.add("hidden");
+function showToast(msg) {
+    DOM.toastMsg.innerText = msg;
+    DOM.toast.classList.remove("hidden");
+    setTimeout(function () {
+        DOM.toast.classList.add("hidden");
     }, 3000);
 }
 
-// Run app
+// Chạy ứng dụng
 init();
